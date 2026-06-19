@@ -1,5 +1,6 @@
 using RepairStatusTracker.Shared.Enums;
 using RepairStatusTracker.Shared.Models;
+using RepairStatusTracker.WinForms.Services;
 
 namespace RepairStatusTracker.WinForms;
 
@@ -8,9 +9,16 @@ internal sealed class MainForm : Form
     private readonly DataGridView dgvJobs = new();
     private readonly Button btnRefresh = new();
     private readonly Button btnUpdateStatus = new();
+    private readonly BindingSource jobsBindingSource = new();
+    private readonly ApiClient apiClient;
 
     public MainForm()
     {
+        apiClient = new ApiClient(new HttpClient
+        {
+            BaseAddress = new Uri("https://localhost:5001/")
+        });
+
         Text = "Repair Status Tracker";
         StartPosition = FormStartPosition.CenterScreen;
         MinimumSize = new Size(900, 600);
@@ -34,6 +42,7 @@ internal sealed class MainForm : Form
         dgvJobs.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         dgvJobs.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         dgvJobs.MultiSelect = false;
+        dgvJobs.DataSource = jobsBindingSource;
 
         var buttonPanel = new FlowLayoutPanel
         {
@@ -54,9 +63,18 @@ internal sealed class MainForm : Form
         buttonPanel.Controls.Add(btnUpdateStatus);
         buttonPanel.Controls.Add(btnRefresh);
 
+        Load += async (_, _) => await LoadJobsAsync();
+        btnRefresh.Click += async (_, _) => await LoadJobsAsync();
+
         layout.Controls.Add(dgvJobs, 0, 0);
         layout.Controls.Add(buttonPanel, 0, 1);
 
         Controls.Add(layout);
+    }
+
+    private async Task LoadJobsAsync()
+    {
+        var jobs = await apiClient.GetRepairJobsAsync();
+        jobsBindingSource.DataSource = jobs.ToList();
     }
 }
