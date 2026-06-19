@@ -8,7 +8,7 @@ internal sealed class RepairStatusDialog : Form
     private readonly Button btnOk = new();
     private readonly Button btnCancel = new();
 
-    public RepairStatusDialog()
+    public RepairStatusDialog(RepairStatus? initialStatus = null)
     {
         Text = "Select Repair Status";
         StartPosition = FormStartPosition.CenterParent;
@@ -17,6 +17,11 @@ internal sealed class RepairStatusDialog : Form
         MaximizeBox = false;
         ShowInTaskbar = false;
         ClientSize = new Size(320, 140);
+
+        if (initialStatus.HasValue)
+        {
+            Shown += (_, _) => SetSelectedStatus(initialStatus.Value);
+        }
 
         var layout = new TableLayoutPanel
         {
@@ -62,6 +67,16 @@ internal sealed class RepairStatusDialog : Form
         layout.Controls.Add(buttonPanel, 0, 1);
 
         Controls.Add(layout);
+    }
+
+    public void SetSelectedStatus(RepairStatus status)
+    {
+        var values = Enum.GetValues<RepairStatus>();
+        var index = Array.IndexOf(values, status);
+        if (index >= 0)
+        {
+            cboRepairStatuses.SelectedIndex = index;
+        }
     }
 
     public bool TryGetSelectedStatus(out RepairStatus status)

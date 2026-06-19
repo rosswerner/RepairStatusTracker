@@ -16,7 +16,7 @@ internal sealed class MainForm : Form
     {
         apiClient = new ApiClient(new HttpClient
         {
-            BaseAddress = new Uri("https://localhost:5001/")
+            BaseAddress = new Uri("https://localhost:60254/")
         });
 
         Text = "Repair Status Tracker";
@@ -43,6 +43,7 @@ internal sealed class MainForm : Form
         dgvJobs.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         dgvJobs.MultiSelect = false;
         dgvJobs.DataSource = jobsBindingSource;
+        dgvJobs.DataBindingComplete += (_, _) => ApplyRowColors();
 
         var buttonPanel = new FlowLayoutPanel
         {
@@ -77,6 +78,34 @@ internal sealed class MainForm : Form
     {
         var jobs = await apiClient.GetRepairJobsAsync();
         jobsBindingSource.DataSource = jobs.ToList();
+        ApplyRowColors();
+    }
+
+    private void ApplyRowColors()
+    {
+        foreach (DataGridViewRow row in dgvJobs.Rows)
+        {
+            if (row.DataBoundItem is not RepairJob repairJob)
+            {
+                continue;
+            }
+
+            row.DefaultCellStyle.BackColor = GetStatusColor(repairJob.Status);
+        }
+    }
+
+    private static Color GetStatusColor(RepairStatus status)
+    {
+        return status switch
+        {
+            RepairStatus.Received => Color.LightGray,
+            RepairStatus.InProgress => Color.LightBlue,
+            RepairStatus.WaitingOnParts => Color.LightYellow,
+            RepairStatus.QualityCheck => Color.Plum,
+            RepairStatus.ReadyForPickup => Color.LightGreen,
+            RepairStatus.Completed => Color.Green,
+            _ => SystemColors.Window
+        };
     }
 
     private async Task UpdateSelectedJobStatusAsync()
@@ -87,7 +116,7 @@ internal sealed class MainForm : Form
             return;
         }
 
-        using var dialog = new RepairStatusDialog();
+        using var dialog = new RepairStatusDialog(selectedJob.Status);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;
