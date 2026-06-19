@@ -1,6 +1,7 @@
 using RepairStatusTracker.Shared.Enums;
 using RepairStatusTracker.Shared.Services;
 using RepairStatusTracker.Shared.Models;
+using RepairStatusTracker.Api.Dtos;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<RepairJobService>();
@@ -31,5 +32,3 @@ app.MapPatch("/api/repairjobs/{id:int}/status", (
 });
 
 app.Run();
-
-public sealed record RepairJobStatusUpdateRequest(string? Status);
