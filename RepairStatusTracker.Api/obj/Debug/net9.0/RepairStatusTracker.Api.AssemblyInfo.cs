@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RepairStatusTracker.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a78dc052499a71ea7a0b222cc7e9b68938189ea6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8a6b2ef4719762de4137ec738061697ca6b54c9a")]
 [assembly: System.Reflection.AssemblyProductAttribute("RepairStatusTracker.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RepairStatusTracker.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
