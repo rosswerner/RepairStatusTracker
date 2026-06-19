@@ -77,3 +77,18 @@ dotnet run
 - Windows Forms
 - System.Text.Json
 - Swashbuckle (Swagger/OpenAPI)
+
+## Assumptions
+
+- Data is stored in memory (mock data + changes don't persist)
+- No authentication
+- Not intended for multiple users at present (concurrent users, record locking, etc not considered)
+
+## Improvements (in no particular order)
+
+- Create/Update/Delete existing data
+- Unit Tests
+- Data stored in db rather than memory
+- Multiple users
+- Repair history/audit trail (probably needs authentication/authorization, but that balloons this out far more than is reasonable)
+- Search/filtering
