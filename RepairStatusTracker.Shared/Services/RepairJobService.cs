@@ -19,6 +19,11 @@ public sealed class RepairJobService
 
     public bool UpdateStatus(int jobId, RepairStatus newStatus)
     {
+        if (!Enum.IsDefined(typeof(RepairStatus), newStatus))
+        {
+            throw new ArgumentOutOfRangeException(nameof(newStatus), newStatus, "Invalid repair status value.");
+        }
+
         var jobIndex = _jobs.FindIndex(job => job.Id == jobId);
         if (jobIndex < 0)
         {
