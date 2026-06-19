@@ -64,5 +64,15 @@ internal sealed class RepairStatusDialog : Form
         Controls.Add(layout);
     }
 
-    public RepairStatus SelectedStatus => (RepairStatus)cboRepairStatuses.SelectedItem!;
+    public bool TryGetSelectedStatus(out RepairStatus status)
+    {
+        if (cboRepairStatuses.SelectedItem is RepairStatus selectedStatus)
+        {
+            status = selectedStatus;
+            return true;
+        }
+
+        status = default;
+        return false;
+    }
 }

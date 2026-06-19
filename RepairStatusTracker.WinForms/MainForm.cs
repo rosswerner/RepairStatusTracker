@@ -59,6 +59,7 @@ internal sealed class MainForm : Form
         btnUpdateStatus.Name = nameof(btnUpdateStatus);
         btnUpdateStatus.Text = "Update Status";
         btnUpdateStatus.AutoSize = true;
+        btnUpdateStatus.Click += async (_, _) => await UpdateSelectedJobStatusAsync();
 
         buttonPanel.Controls.Add(btnUpdateStatus);
         buttonPanel.Controls.Add(btnRefresh);
@@ -76,5 +77,43 @@ internal sealed class MainForm : Form
     {
         var jobs = await apiClient.GetRepairJobsAsync();
         jobsBindingSource.DataSource = jobs.ToList();
+    }
+
+    private async Task UpdateSelectedJobStatusAsync()
+    {
+        if (dgvJobs.CurrentRow?.DataBoundItem is not RepairJob selectedJob)
+        {
+            MessageBox.Show(this, "Please select a repair job before updating its status.", "No Repair Job Selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        using var dialog = new RepairStatusDialog();
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        if (!dialog.TryGetSelectedStatus(out var newStatus))
+        {
+            MessageBox.Show(this, "Please choose a repair status.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        try
+        {
+            var updated = await apiClient.UpdateStatusAsync(selectedJob.Id, newStatus.ToString());
+            if (!updated)
+            {
+                MessageBox.Show(this, "The repair job could not be found or updated.", "API Failure", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            await LoadJobsAsync();
+            MessageBox.Show(this, "The repair job status was updated successfully.", "Update Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, $"The status update failed.\n\n{ex.Message}", "API Failure", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 }
