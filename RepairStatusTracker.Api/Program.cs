@@ -1,19 +1,49 @@
+using RepairStatusTracker.Api.Dtos;
+using System.Text.Json.Serialization;
 using RepairStatusTracker.Shared.Enums;
-using RepairStatusTracker.Shared.Services;
 using RepairStatusTracker.Shared.Models;
+using RepairStatusTracker.Shared.Services;
 using RepairStatusTracker.Api.Dtos;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<RepairJobService>();
 
-var app = builder.Build();
-
-app.MapGet("/", () => new[]
+builder.Services.ConfigureHttpJsonOptions(options =>
 {
-    new RepairTicket(1, "Sample repair", RepairStatus.Received)
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-app.MapGet("/api/repairjobs", (RepairJobService repairJobService) => repairJobService.GetAllJobs());
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new() { Title = "Repair Status Tracker API", Version = "v1" });
+});
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Repair Status Tracker API v1");
+        options.RoutePrefix = "swagger";
+    });
+}
+
+app.MapGet("/", () => Results.Redirect("/swagger"))
+.WithName("GetRoot")
+.WithTags("General")
+.WithSummary("Redirect to API documentation")
+.WithDescription("Redirects to the Swagger UI documentation page.")
+.ExcludeFromDescription();
+
+app.MapGet("/api/repairjobs", (RepairJobService repairJobService) => repairJobService.GetAllJobs())
+.WithName("GetAllRepairJobs")
+.WithTags("Repair Jobs")
+.WithSummary("Get all repair jobs")
+.WithDescription("Retrieves a list of all repair jobs with their current status.")
+.Produces<IReadOnlyList<RepairJob>>(StatusCodes.Status200OK);
 
 app.MapPatch("/api/repairjobs/{id:int}/status", (
     int id,
@@ -29,6 +59,14 @@ app.MapPatch("/api/repairjobs/{id:int}/status", (
 
     var updated = repairJobService.UpdateStatus(id, newStatus);
     return updated ? Results.NoContent() : Results.NotFound();
-});
+})
+.WithName("UpdateRepairJobStatus")
+.WithTags("Repair Jobs")
+.WithSummary("Update repair job status")
+.WithDescription("Updates the status of a specific repair job. Valid status values are: Received, InProgress, WaitingOnParts, QualityCheck, ReadyForPickup, Completed.")
+.Accepts<RepairJobStatusUpdateRequest>("application/json")
+.Produces(StatusCodes.Status204NoContent)
+.Produces<object>(StatusCodes.Status400BadRequest)
+.Produces(StatusCodes.Status404NotFound);
 
 app.Run();

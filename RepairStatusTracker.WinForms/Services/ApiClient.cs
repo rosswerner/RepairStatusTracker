@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using RepairStatusTracker.Shared.Models;
 
 namespace RepairStatusTracker.WinForms.Services;
@@ -6,6 +8,11 @@ namespace RepairStatusTracker.WinForms.Services;
 public sealed class ApiClient
 {
     private readonly HttpClient httpClient;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public ApiClient(HttpClient httpClient)
     {
@@ -14,13 +21,13 @@ public sealed class ApiClient
 
     public async Task<IReadOnlyList<RepairJob>> GetRepairJobsAsync()
     {
-        var jobs = await httpClient.GetFromJsonAsync<List<RepairJob>>("api/repairjobs");
+        var jobs = await httpClient.GetFromJsonAsync<List<RepairJob>>("api/repairjobs", JsonOptions);
         return jobs ?? [];
     }
 
     public async Task<bool> UpdateStatusAsync(int jobId, string status)
     {
-        var response = await httpClient.PatchAsJsonAsync($"api/repairjobs/{jobId}/status", new { status });
+        var response = await httpClient.PatchAsJsonAsync($"api/repairjobs/{jobId}/status", new { status }, JsonOptions);
 
         if (response.IsSuccessStatusCode)
         {
