@@ -1,9 +1,11 @@
-using RepairStatusTracker.Api.Dtos;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
+using RepairStatusTracker.Api.Dtos;
+using RepairStatusTracker.Api.Services;
+using RepairStatusTracker.Shared.Constants;
 using RepairStatusTracker.Shared.Enums;
 using RepairStatusTracker.Shared.Models;
-using RepairStatusTracker.Shared.Services;
-using RepairStatusTracker.Api.Dtos;
+using RepairStatusTracker.Shared.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<RepairJobService>();
@@ -38,21 +40,19 @@ app.MapGet("/", () => Results.Redirect("/swagger"))
 .WithDescription("Redirects to the Swagger UI documentation page.")
 .ExcludeFromDescription();
 
-app.MapGet("/api/repairjobs", (RepairJobService repairJobService) => repairJobService.GetAllJobs())
+app.MapGet(ApiRoutes.RepairJobs, (RepairJobService repairJobService) => repairJobService.GetAllJobs())
 .WithName("GetAllRepairJobs")
 .WithTags("Repair Jobs")
 .WithSummary("Get all repair jobs")
 .WithDescription("Retrieves a list of all repair jobs with their current status.")
 .Produces<IReadOnlyList<RepairJob>>(StatusCodes.Status200OK);
 
-app.MapPatch("/api/repairjobs/{id:int}/status", (
+app.MapPatch(string.Format(ApiRoutes.UpdateStatus, "{id:int}"), (
     int id,
     RepairJobStatusUpdateRequest request,
     RepairJobService repairJobService) =>
 {
-    if (string.IsNullOrWhiteSpace(request.Status) ||
-        !Enum.TryParse<RepairStatus>(request.Status, ignoreCase: true, out var newStatus) ||
-        !Enum.IsDefined(typeof(RepairStatus), newStatus))
+    if (!RepairStatusValidator.IsValid(request.Status, out var newStatus))
     {
         return Results.BadRequest(new { error = "Invalid repair status." });
     }

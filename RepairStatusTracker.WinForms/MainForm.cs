@@ -1,5 +1,6 @@
-using RepairStatusTracker.Shared.Enums;
+using System.Configuration;
 using RepairStatusTracker.Shared.Models;
+using RepairStatusTracker.WinForms.Helpers;
 using RepairStatusTracker.WinForms.Services;
 
 namespace RepairStatusTracker.WinForms;
@@ -14,9 +15,12 @@ internal sealed class MainForm : Form
 
     public MainForm()
     {
+        var apiBaseUrl = ConfigurationManager.AppSettings["ApiBaseUrl"] 
+            ?? throw new InvalidOperationException("ApiBaseUrl not configured in App.config");
+
         apiClient = new ApiClient(new HttpClient
         {
-            BaseAddress = new Uri("https://localhost:60254/")
+            BaseAddress = new Uri(apiBaseUrl)
         });
 
         Text = "Repair Status Tracker";
@@ -76,9 +80,38 @@ internal sealed class MainForm : Form
 
     private async Task LoadJobsAsync()
     {
-        var jobs = await apiClient.GetRepairJobsAsync();
-        jobsBindingSource.DataSource = jobs.ToList();
-        ApplyRowColors();
+        try
+        {
+            btnRefresh.Enabled = false;
+            btnUpdateStatus.Enabled = false;
+            Cursor = Cursors.WaitCursor;
+
+            var jobs = await apiClient.GetRepairJobsAsync();
+            jobsBindingSource.DataSource = jobs.ToList();
+            ApplyRowColors();
+        }
+        catch (HttpRequestException ex)
+        {
+            MessageBox.Show(this,
+                $"Failed to connect to the server.\n\n{ex.Message}",
+                "Connection Error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                $"Failed to load repair jobs.\n\n{ex.Message}",
+                "Load Error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+            btnRefresh.Enabled = true;
+            btnUpdateStatus.Enabled = true;
+        }
     }
 
     private void ApplyRowColors()
@@ -90,22 +123,8 @@ internal sealed class MainForm : Form
                 continue;
             }
 
-            row.DefaultCellStyle.BackColor = GetStatusColor(repairJob.Status);
+            row.DefaultCellStyle.BackColor = StatusColorHelper.GetColor(repairJob.Status);
         }
-    }
-
-    private static Color GetStatusColor(RepairStatus status)
-    {
-        return status switch
-        {
-            RepairStatus.Received => Color.LightGray,
-            RepairStatus.InProgress => Color.LightBlue,
-            RepairStatus.WaitingOnParts => Color.LightYellow,
-            RepairStatus.QualityCheck => Color.Plum,
-            RepairStatus.ReadyForPickup => Color.LightGreen,
-            RepairStatus.Completed => Color.Green,
-            _ => SystemColors.Window
-        };
     }
 
     private async Task UpdateSelectedJobStatusAsync()

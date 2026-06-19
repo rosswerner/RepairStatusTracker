@@ -12,4 +12,8 @@
     <ProjectReference Include="..\RepairStatusTracker.Shared\RepairStatusTracker.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
+  </ItemGroup>
+
 </Project>

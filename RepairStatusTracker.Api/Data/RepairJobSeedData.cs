@@ -1,8 +1,12 @@
 using RepairStatusTracker.Shared.Enums;
+using RepairStatusTracker.Shared.Models;
 
-namespace RepairStatusTracker.Shared.Models;
+namespace RepairStatusTracker.Api.Data;
 
-public static class RepairJobMockData
+/// <summary>
+/// Mock data for seeding repair jobs
+/// </summary>
+public static class RepairJobSeedData
 {
     public static readonly IReadOnlyList<RepairJob> Jobs = new List<RepairJob>
     {
